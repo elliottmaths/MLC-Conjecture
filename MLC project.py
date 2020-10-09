@@ -1,12 +1,6 @@
-# generate pictures of Mandelbrot set for a given neighborhood
-# generate pictures of Julia sets
-# compute orbit of a point under f_c iteration
-# draw equipotentials and external rays (for both dynamical and parameter planes)
-
 import cmath
 from matplotlib import pyplot as plt
 from imageio import imread
-import matplotlib.cbook as cbook
 import numpy as np
 from PIL import Image, ImageDraw
 
@@ -55,8 +49,6 @@ def plot_orbit_f(c, z, NumberOfIterates, scale, DrawCircle):
     plt.axes().set_aspect(1)
     plt.show()
 
-#plot_orbit_f(-0.7-0.3*i, 0, 30, (-8, 2.5, -3.5, 6.5), True)
-
 def mandelbrot(c, NumberOfIterates):
     n = 0
     z = 0
@@ -73,7 +65,6 @@ def generate_mandelbrot_png(NumberOfIterates, scale, ImageWidth, filename):
 
     ratio = abs(scale[3] - scale[2]) / abs(scale[1] - scale[0])
     ImageHeight = int(ImageWidth * ratio)
-    palette = []
     im = Image.new('RGB', (ImageWidth, ImageHeight), (0, 0, 0))
     draw = ImageDraw.Draw(im)
     for x in range(0, ImageWidth):
@@ -83,10 +74,6 @@ def generate_mandelbrot_png(NumberOfIterates, scale, ImageWidth, filename):
             ColourNum = 255 - int(m * 255 / NumberOfIterates)
             draw.point([x, y], (ColourNum, ColourNum, ColourNum))
     im.save(filename + '.png', 'PNG')
-
-
-#generate_mandelbrot_png(150, [-2, 1, -1.5, 1.5], 500, "zoom")
-
 
 def plot_image_on_plane(PlaneScale, ImageScale, filename):
 
@@ -106,10 +93,3 @@ def plot_image_on_plane(PlaneScale, ImageScale, filename):
     plt.axes().set_aspect(1)
     plt.imshow(img, zorder=0, extent=[ImageScale[0], ImageScale[1], ImageScale[2], ImageScale[3]])
     plt.show()
-
-plot_image_on_plane([-0.18, -0.14, 1.013, 1.053], [-0.18, -0.14, 1.013, 1.053], 'mandelbrot zoom.png')
-
-
-
-
-
