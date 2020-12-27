@@ -406,7 +406,7 @@ def parameter_equipotential(constant, thickness, EquiNumber, NumberOfIterates, s
             num = convert_img_coord_to_complex(width, height, scale, ImageWidth, ImageHeight)
             difference = abs(constant - parameter_potential_function(num, EquiNumber))
             if difference < thickness:
-                draw.point([width, height], (127, 127, 127))
+                draw.point([width, height], (0, 0, 0))
     im.save(filename + '.png', 'PNG')
     
 #parameter_equipotential(0.01, 0.001, 10, 100, [-2.5, 1, 1.75, -1.75], 800, "ParameterEquipotential")
