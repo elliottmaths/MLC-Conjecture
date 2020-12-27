@@ -378,14 +378,14 @@ def parameter_potential_function(c, n):
         arg = log(arg)
     return arg / (2 ** n)
 
-def parameter_equipotential(constant, thickness, EquiNumber, NumberOfIterates, scale, ImageWidth, filename):
+def parameter_equipotential(potential, thickness, EquiNumber, NumberOfIterates, scale, ImageWidth, filename):
 
     # Generates an image of the Mandelbrot set, enveloped by some equipotential
     #
     # Inputs:
-    # constant = number that is the potential / radius of the equipotential we are drawing
+    # potential = number that is the potential / radius of the equipotential we are drawing
     # thickness = number that describes the requested thickness of the drawn equipotential curve; higher number gives a thicker
-    #             equipotential, I would recommend putting thickness = 0.001 or thereabouts, if the entire Mandelbrot set is in picture
+    #             equipotential, I would recommend putting thickness as half of potential, seeing what you get, and then fiddling with it
     # EquiNumber = integer that will be used to approximate the potential function; a higher number gives a more accurate approximation,
     #              but any value of EquiNumber more than, say, 10 will return an error as calculations involve huge numbers
     # NumberOfIterates = integer that specifies how many iterates we calculate - a higher number takes more time but gives a more accurate depiction of Mandelbrot set
@@ -404,7 +404,7 @@ def parameter_equipotential(constant, thickness, EquiNumber, NumberOfIterates, s
     for height in range(ImageHeight, 0, -1):
         for width in range(ImageWidth):
             num = convert_img_coord_to_complex(width, height, scale, ImageWidth, ImageHeight)
-            difference = abs(constant - parameter_potential_function(num, EquiNumber))
+            difference = abs(potential - parameter_potential_function(num, EquiNumber))
             if difference < thickness:
                 draw.point([width, height], (0, 0, 0))
     im.save(filename + '.png', 'PNG')
