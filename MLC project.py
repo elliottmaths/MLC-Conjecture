@@ -6,6 +6,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageOps
 import random
 from math import floor, log
+import time
 
 # In this module, i is reserved for the square root of -1
 # Complex numbers are thus written as a + b*i, for some numbers a, b
@@ -57,7 +58,7 @@ def plot_orbit_f(c, z, NumberOfIterates, scale, DrawCircle):
     RealPart = []
     ImagPart = []
     point = z
-    for j in range(NumberOfIterates):
+    for iterate in range(NumberOfIterates):
         point = f(c, point)
         RealPart.append(point.real)
         ImagPart.append(point.imag)
@@ -74,63 +75,37 @@ def plot_orbit_f(c, z, NumberOfIterates, scale, DrawCircle):
     plt.ylabel('Im z')
     plt.axes().set_aspect(1)
     plt.show()
-
-#plot_orbit_f(-0.15472 + 1.031046*i, 0, 100, (-2, 2, -2, 2), False)
-
-def generate_mandelbrot_png(NumberOfIterates, scale, ImageWidth, filename):
-
-    # Generates an image of the Mandelbrot set on the parameter plane
-    #
-    # Inputs:
-    # NumberOfIterates = integer that is max number of iterates to which we test whether a point is in the set - a higher value will give a more accurate image, but will take longer
-    # scale = 4-tuple specifying which part of the complex plane we want to look at, so that we may e.g. zoom in - order goes [left, right, top, bottom]
-    # ImageWidth = integer that is number of pixels that the output image will have as width
-    # filename = string that the image will have as its name - file extensions need not be included in this
-    #
-    # Outputs:
-    # will save a .png image in the current working directory, displaying the specified part of the Mandelbrot set
-
-    ratio = abs(scale[3] - scale[2]) / abs(scale[1] - scale[0])
-    ImageHeight = int(ImageWidth * ratio)
-    im = Image.new('RGB', (ImageWidth, ImageHeight), (0, 0, 0))
-    draw = ImageDraw.Draw(im)
-    for x in range(0, ImageWidth):
-        for y in range(0, ImageHeight):
-            c = scale[0] + (x / ImageWidth) * (scale[1] - scale[0]) + (scale[3] + (y / ImageHeight) * (scale[2] - scale[3])) * i
-            n = 0
-            z = 0
-            while abs(z) <= 2 and n < NumberOfIterates:
-                n = n + 1
-                z = f(c, z)
-            ColourNum = 255 - int(n * 255 / NumberOfIterates)
-            draw.point([x, y], (ColourNum, ColourNum, ColourNum))
-    im.save(filename + '.png', 'PNG')
-
-#generate_mandelbrot_png(150, [0, 0.5, 0.25, -0.25], 3000, "cusp")
+    
+# The below parameter belongs to the main cardioid of the Mandelbrot set
+# The critical point is attracted to the associated quadratic's attracting fixed point
+# (see Theorem 3.8)
+# plot_orbit_f(0.25+ 0.1*i, 0, 100, [0.2, 0.35, 0.075, 0.275], False)
 
 def generate_hyperbolic_components_png(NumberOfComponents, scale, ImageWidth, filename):
 
-    # Generates an image of the main cardioid of the Mandelbrot set on the parameter plane, that is, the parameters that have an attracting fixed point
+    # Generates an image of hyperbolic components of the Mandelbrot set on the parameter plane, that is, connected components of the interior of the
+    # Mandelbrot set which consist of parameters whose quadratics possess attracting cycles
     #
     # Inputs:
     # NumberOfComponents = integer specifying how many hyperbolic components to generate. Note we are counting e.g. all hyperbolic components with 3-cycles
-    #                      as 'one component'. Also, this function is work in progress - can currently only go up to 2 components
-    # scale = 4-tuple specifying which part of the complex plane we want to look at, so that we may e.g. zoom in - order goes [left, right, top, bottom]
+    #                      as 'one component'. This function is work in progress - can currently only go up to 2 components
+    # scale = 4-tuple specifying which part of the complex plane we want to look at, so that we may e.g. zoom in - order goes [left, right, bottom, top]
     # ImageWidth = integer that is number of pixels that the output image will have as width
     # filename = string that the image will have as its name - file extensions need not be included in this
     #
     # Outputs:
     # will save a .png image in the current working directory, displaying the specified part of the main cardioid
-
+    
+    scale = [scale[0], scale[1], scale[3], scale[2]]
     if NumberOfComponents not in [1, 2]:
         raise ValueError("NumberOfComponents must be 1 or 2.")
-    ratio = abs(scale[3] - scale[2]) / abs(scale[1] - scale[0])
+    ratio = abs(scale[2] - scale[3]) / abs(scale[1] - scale[0])
     ImageHeight = int(ImageWidth * ratio)
     im = Image.new('RGB', (ImageWidth, ImageHeight), (0, 0, 0))
     draw = ImageDraw.Draw(im)
     for x in range(0, ImageWidth):
         for y in range(0, ImageHeight):
-            c = scale[0] + (x / ImageWidth) * (scale[1] - scale[0]) + (scale[3] + (y / ImageHeight) * (scale[2] - scale[3])) * i
+            c = scale[0] + (x / ImageWidth) * (scale[1] - scale[0]) + (scale[2] + (y / ImageHeight) * (scale[3] - scale[2])) * i
             if abs(1-cmath.sqrt(1-4*c)) < 1:
                 draw.point([x, y], (0, 0, 0))
             elif abs(4*(c + 1)) < 1:
@@ -140,7 +115,7 @@ def generate_hyperbolic_components_png(NumberOfComponents, scale, ImageWidth, fi
                 draw.point([x, y], (255, 255, 255))
     im.save(filename + '.png', 'PNG')
     
-#generate_hyperbolic_components_png(2, [-2., 1, 1.5, -1.5], 3000, "2components")
+generate_hyperbolic_components_png(2, [-2., 1, 1.5, -1.5], 3000, "2components")
 
 def plot_image_on_plane(PlaneScale, ImageScale, filename, *args):
 
@@ -154,7 +129,9 @@ def plot_image_on_plane(PlaneScale, ImageScale, filename, *args):
     #
     # Outputs:
     # pyplot will splash an image on-screen
-    
+
+    PlaneScale = [PlaneScale[0], PlaneScale[1], PlaneScale[3], PlaneScale[2]]
+    ImageScale = [ImageScale[0], ImageScale[1], ImageScale[3], ImageScale[2]]
     img = imread(filename)
     plt.xlim(PlaneScale[0], PlaneScale[1])
     plt.ylim(PlaneScale[2], PlaneScale[3])
@@ -166,8 +143,6 @@ def plot_image_on_plane(PlaneScale, ImageScale, filename, *args):
     plt.axes().set_aspect(1)
     plt.imshow(img, zorder=0, extent=[ImageScale[0], ImageScale[1], ImageScale[2], ImageScale[3]])
     plt.show()
-
-#plot_image_on_plane([-2.2, 1, 1.5, -1.5], [-2, 1, 1.5, -1.5], '2components.png')
 
 def convert_complex_to_img_coord(z, scale, ImageWidth, ImageHeight):
 
@@ -206,6 +181,38 @@ def convert_img_coord_to_complex(x, y, scale, ImageWidth, ImageHeight):
     ImagPart = scale[2] - HowFarDown * abs(scale[3] - scale[2])
     return RealPart + ImagPart*i
 
+def generate_mandelbrot_png(NumberOfIterates, scale, ImageWidth, filename):
+
+    # Generates an image of the Mandelbrot set on the parameter plane
+    #
+    # Inputs:
+    # NumberOfIterates = integer that is max number of iterates to which we test whether a point is in the set - a higher value will give a more accurate image, but will take longer
+    # scale = 4-tuple specifying which part of the complex plane we want to look at, so that we may e.g. zoom in - order goes [left, right, bottom, top]
+    # ImageWidth = integer that is number of pixels that the output image will have as width
+    # filename = string that the image will have as its name - file extensions need not be included in this
+    #
+    # Outputs:
+    # will save a .png image in the current working directory, displaying the specified part of the Mandelbrot set
+
+    scale = [scale[0], scale[1], scale[3], scale[2]]
+    ratio = abs(scale[3] - scale[2]) / abs(scale[1] - scale[0])
+    ImageHeight = int(ImageWidth * ratio)
+    im = Image.new('RGB', (ImageWidth, ImageHeight), (0, 0, 0))
+    draw = ImageDraw.Draw(im)
+    for x in range(0, ImageWidth):
+        for y in range(0, ImageHeight):
+            c = convert_img_coord_to_complex(x, y, scale, ImageWidth, ImageHeight)
+            n = 0
+            z = 0
+            while abs(z) <= 2 and n < NumberOfIterates:
+                n = n + 1
+                z = f(c, z)
+            ColourNum = 255 - int(n * 255 / NumberOfIterates)
+            draw.point([x, y], (ColourNum, ColourNum, ColourNum))
+    im.save(filename + '.png', 'PNG')
+
+# generate_mandelbrot_png(300, [-0.17, -0.15, 1.025, 1.045], 400, "MiniMandelbrot")
+
 def generate_julia_png(c, NumberOfIterates, scale, ImageWidth, filename):
 
     # Generates an image of the Julia set of a point in the parameter plane
@@ -213,7 +220,7 @@ def generate_julia_png(c, NumberOfIterates, scale, ImageWidth, filename):
     # Inputs:
     # c = complex number that is a point in the parameter plane, so that we are considering the Julia set of f_c
     # NumberOfIterates = integer that specifies how many iterates we calculate - a higher number takes more time but gives a more accurate depiction
-    # scale = 4-tuple, specifying a rectangle of the complex plane - order goes [left, right, top, bottom]
+    # scale = 4-tuple, specifying a rectangle of the complex plane - order goes [left, right, bottom, top]
     # ImageWidth = integer that gives the desired number of pixels that the image has across - height will be calculated accordingly, based on scale
     # filename = string that the image of the Julia set will be saved as - note, this should not include the file extension, e.g. .png
     #
@@ -222,7 +229,8 @@ def generate_julia_png(c, NumberOfIterates, scale, ImageWidth, filename):
     #
     # NOTE: In contrast to alt_generate_julia_png, this function uses the inverse iteration algorithm
     # Accordingly, it is more efficient than the other version, but gives less detail for certain Julia sets
-    
+
+    scale = [scale[0], scale[1], scale[3], scale[2]]
     ratio = abs(scale[2] - scale[3]) / abs(scale[1] - scale[0])
     ImageHeight = int(ImageWidth * ratio)
     im = Image.new('RGB', (ImageWidth, ImageHeight), (255, 255, 255))
@@ -240,19 +248,6 @@ def generate_julia_png(c, NumberOfIterates, scale, ImageWidth, filename):
         LastPoint = NextPoint
     im.save(filename + '.png', 'PNG')
 
-def distance(a,b):
-
-    # Calculates the Euclidean distance between two points in the complex plane
-    #
-    # Inputs:
-    # a = complex number that is one of the points under consideration
-    # b = complex number that is the other point under consideration
-    #
-    # Outputs:
-    # returns a float that gives the distance between a and b
-    
-    return cmath.sqrt((a.real - b.real)**2 + (a.imag - b.imag)**2)
-
 def alt_generate_julia_png(c, NumberOfIterates, scale, ImageWidth, filename):
 
     # Generates an image of the Julia set of a point in the parameter plane
@@ -269,7 +264,8 @@ def alt_generate_julia_png(c, NumberOfIterates, scale, ImageWidth, filename):
     #
     # NOTE: In contrast to generate_julia_png, this function uses the so-called boundary scanning method
     # Accordingly, it is less efficient than the other version, but gives more detail for certain Julia sets
-    
+
+    scale = [scale[0], scale[1], scale[3], scale[2]]
     ratio = abs(scale[2] - scale[3]) / abs(scale[1] - scale[0])
     ImageHeight = int(ImageWidth * ratio)
     im = Image.new('RGB', (ImageWidth, ImageHeight), (255, 255, 255))
@@ -294,9 +290,50 @@ def alt_generate_julia_png(c, NumberOfIterates, scale, ImageWidth, filename):
                 draw.point([width, height], (0, 0, 0))
     im.save(filename + '.png', 'PNG')
 
-#generate_julia_png(0, 10000, [-1.5, 1.5, 1.5, -1.5], 10000, "Circle")
-#alt_generate_julia_png(-0.12+0.75*i, 200, [-1.5, 1.5, 1.5, -1.5], 1200, "DouadyRabbit")
+# generate_julia_png(0, 10000, [-1.5, 1.5, 1.5, -1.5], 10000, "Circle")
+# alt_generate_julia_png(-0.12+0.75*i, 200, [-1.2, -0.8, 1, 0.6], 300, "DouadyRabbit")
 
+def plot_orbit_on_julia(c, z, NumberOfIteratesInJulia, NumberOfIteratesInOrbit, scale, ImageWidth, RenormNumber):
+
+    # Plots the orbit of f_c on the dynamical plane
+    #
+    # Inputs:
+    # c = The parameter, so that we are plotting the Julia set J(c). Must be inputted as a + b*i, for real a,b
+    # z = Initial point, from which the orbit of f_c will be plotted
+    # NumberOfIteratesInJulia = Integer which decides 'resolution' of Julia set
+    # NumberOfIteratesInOrbit = Integer number of points in orbit to plot
+    # scale = 4-tuple, say (a, b, c, d), so that the plot shows the plane for a < Re z < b, c < Im z < d
+    # ImageWidth = Integer that gives number of pixels of the width of the generated image
+    # RenormNumber = For normal purposes, input this as 1. Other inputs allow the plotted orbit to skip over
+    #                a fixed number of iterates, e.g. if RenormNumber = 3, we plot every 3rd point in orbit
+    #
+    # Outputs:
+    # pyplot will splash an image on-screen
+
+    alt_generate_julia_png(c, NumberOfIteratesInJulia, scale, ImageWidth, "auxiliary-im")
+    scale = [scale[0], scale[1], scale[3], scale[2]]
+    img = imread("auxiliary-im.png")
+    RealPart = []
+    ImagPart = []
+    point = z
+    WhichIterate = 0
+    for iterate in range(NumberOfIteratesInOrbit):
+        if WhichIterate % RenormNumber == 0:
+            RealPart.append(point.real)
+            ImagPart.append(-1 * point.imag)
+        point = f(c, point)
+        WhichIterate = WhichIterate + 1
+    plt.plot(RealPart, ImagPart, 'C3', lw=3)
+    plt.scatter(RealPart, ImagPart, s=120)
+    plt.xlim(scale[0], scale[1])
+    plt.ylim(scale[2], scale[3])
+    plt.xlabel('Re z')
+    plt.ylabel('Im z')
+    plt.axes().set_aspect(1)
+    plt.imshow(img, zorder=0, extent=[scale[0], scale[1], scale[2], scale[3]])
+    plt.show()
+
+# plot_orbit_on_julia(-0.12+0.75*i, 0.765 - 0.3*i, 300, 10, [-1.5, 1.5, -1.5, 1.5], 400, 1)
 
 def generate_cantor_png(NumberOfIterates, scale, ImageWidth, filename):
 
@@ -304,13 +341,14 @@ def generate_cantor_png(NumberOfIterates, scale, ImageWidth, filename):
     #
     # Inputs:
     # NumberOfIterates = integer that specifies how many iterates we calculate - a higher number takes more time but gives a more accurate depiction
-    # scale = 4-tuple, specifying a rectangle of the complex plane - order goes [left, right, top, bottom]
+    # scale = 4-tuple, specifying a rectangle of the complex plane - order goes [left, right, bottom, top]
     # ImageWidth = integer that gives the desired number of pixels that the image has across - height will be calculated accordingly, based on scale
     # filename = string that the image of the Cantor set will be saved as - note, this should not include the file extension, e.g. .png
     #
     # Outputs:
     # saves a .png image in the current working directory, depicting the Cantor middle third set
 
+    scale = [scale[0], scale[1], scale[3], scale[2]]
     ratio = abs(scale[2] - scale[3]) / abs(scale[1] - scale[0])
     ImageHeight = int(ImageWidth * ratio)
     im = Image.new('RGB', (ImageWidth, ImageHeight), (255, 255, 255))
@@ -335,7 +373,7 @@ def generate_cantor_png(NumberOfIterates, scale, ImageWidth, filename):
             LastColour = CurrentColour
     im.save(filename + '.png', 'PNG')
 
-#generate_cantor_png(5, [-0.1, 1.1, 0.05, -0.05], 2000, 'Cantor')
+# generate_cantor_png(5, [-0.1, 1.1, -0.05, 0.05], 2000, 'Cantor')
 
 def topologists_sine_curve(NumberOfPointsCalculated, scale):
     
@@ -343,7 +381,7 @@ def topologists_sine_curve(NumberOfPointsCalculated, scale):
     #
     # Inputs:
     # NumberOfPointsCalculated = integer that specifies how many points of sin(1/x) we calculate - a higher number takes more time but gives a more accurate depiction
-    # scale = 4-tuple, specifying a rectangle of the real plane - order goes [left, right, top, bottom]
+    # scale = 4-tuple, specifying a rectangle of the real plane - order goes [left, right, bottom, top]
     #
     # Outputs:
     # pyplot will splash an image on-screen
@@ -353,30 +391,66 @@ def topologists_sine_curve(NumberOfPointsCalculated, scale):
     x = np.linspace(0.0001*scale[1], min(scale[1], 1), NumberOfPointsCalculated)
     plt.plot(x, np.sin(1/x), color = "red")
     plt.xlim(scale[0], scale[1])
-    plt.ylim(scale[3], scale[2])
+    plt.ylim(scale[2], scale[3])
     plt.show()
 
-#topologists_sine_curve(100000, [-0.001, 0.01, 0.1, -0.1])
+# topologists_sine_curve(100000, [-0.001, 0.01, -0.1, 0.1])
 
-def parameter_potential_function(c, n):
+def potential_function(c, z, n):
 
-    # Calculates (an approximation to) the parameter potential function for the Mandelbrot set
+    # Calculates (an approximation to) the potential function for the Julia set J(c)
+    # Note that taking z = c will give the potential function for the Mandelbrot set, evaluated at the parameter c
     #
     # Inputs:
-    # c = complex number that is the point in the parameter plane whose potential we are calculating
+    # c = complex number that is the parameter associated to the Julia set whose potential we are calculating
     # n = integer that we use to approximate the potential with; a higher n-value gives a more accurate answer,
     #     but even for, say, n > 10 we may sometimes get an error, as calculations involve high numbers - this
     #     isn't likely to be a problem though, as the approximation is good even for e.g. n = 10
     #
     # Outputs:
-    # returns the approximation to the parameter potential of the Mandelbrot set at c
+    # returns the approximation to the potential function of J(c) evaluated at z
     
-    arg = abs(iterate_f(c, 0, n))
+    arg = abs(iterate_f(c, z, n))
     if arg < 1:
         arg = 0
     else:
         arg = log(arg)
     return arg / (2 ** n)
+
+def dynamical_equipotential(c, potential, thickness, EquiNumber, NumberOfIterates, scale, ImageWidth, filename):
+
+    # Generates an image of the Julia set J(c), enveloped by some equipotential
+    #
+    # Inputs:
+    # potential = number that is the potential / radius of the equipotential we are drawing
+    # thickness = number that describes the requested thickness of the drawn equipotential curve; higher number gives a thicker
+    #             equipotential, I would recommend putting thickness as half of potential, seeing what you get, and then fiddling with it
+    # EquiNumber = integer that will be used to approximate the potential function; a higher number gives a more accurate approximation,
+    #              but any value of EquiNumber more than, say, 10 will return an error as calculations involve huge numbers
+    # NumberOfIterates = integer that specifies how many iterates we calculate - a higher number takes more time but gives a more accurate depiction of Julia set
+    # scale = 4-tuple, specifying a rectangle of the complex plane - order goes [left, right, bottom, top]
+    # ImageWidth = integer that gives the desired number of pixels that the image has across - height will be calculated accordingly, based on scale
+    # filename = string that the image of the equipotential will be saved as - note, this should not include the file extension, e.g. .png
+    #
+    # Outputs:
+    # saves a .png image in the current working directory, depicting the equipotential
+
+    alt_generate_julia_png(c, NumberOfIterates, scale, ImageWidth, "auxiliary-im")
+    scale = [scale[0], scale[1], scale[3], scale[2]]
+    ratio = abs(scale[3] - scale[2]) / abs(scale[1] - scale[0])
+    ImageHeight = int(ImageWidth * ratio)
+    im = Image.open("auxiliary-im.png")
+    #im = Image.new('RGB', (ImageWidth, ImageHeight), (255, 255, 255))
+    draw = ImageDraw.Draw(im)
+    for height in range(ImageHeight, 0, -1):
+        for width in range(ImageWidth):
+            num = convert_img_coord_to_complex(width, height, scale, ImageWidth, ImageHeight)
+            difference = abs(potential - potential_function(c, num, EquiNumber))
+            if difference < thickness:
+                draw.point([width, height], (0, 0, 0))
+    im.save(filename + '.png', 'PNG')
+
+# dynamical_equipotential(-0.12+0.75*i, 0.1, 0.005, 9, 250, [-1.5, 1.5, -1.5, 1.5], 700, "RabbitEquipotential")
 
 def parameter_equipotential(potential, thickness, EquiNumber, NumberOfIterates, scale, ImageWidth, filename):
 
@@ -389,7 +463,7 @@ def parameter_equipotential(potential, thickness, EquiNumber, NumberOfIterates, 
     # EquiNumber = integer that will be used to approximate the potential function; a higher number gives a more accurate approximation,
     #              but any value of EquiNumber more than, say, 10 will return an error as calculations involve huge numbers
     # NumberOfIterates = integer that specifies how many iterates we calculate - a higher number takes more time but gives a more accurate depiction of Mandelbrot set
-    # scale = 4-tuple, specifying a rectangle of the complex plane - order goes [left, right, top, bottom]
+    # scale = 4-tuple, specifying a rectangle of the complex plane - order goes [left, right, bottom, top]
     # ImageWidth = integer that gives the desired number of pixels that the image has across - height will be calculated accordingly, based on scale
     # filename = string that the image of the equipotential will be saved as - note, this should not include the file extension, e.g. .png
     #
@@ -397,16 +471,19 @@ def parameter_equipotential(potential, thickness, EquiNumber, NumberOfIterates, 
     # saves a .png image in the current working directory, depicting the equipotential
     
     generate_mandelbrot_png(NumberOfIterates, scale, ImageWidth, "auxiliary-im")
+    scale = [scale[0], scale[1], scale[3], scale[2]]
     ratio = abs(scale[3] - scale[2]) / abs(scale[1] - scale[0])
     ImageHeight = int(ImageWidth * ratio)
     im = Image.open("auxiliary-im.png")
+    #im = Image.new('RGB', (ImageWidth, ImageHeight), (255, 255, 255))
     draw = ImageDraw.Draw(im)
     for height in range(ImageHeight, 0, -1):
         for width in range(ImageWidth):
             num = convert_img_coord_to_complex(width, height, scale, ImageWidth, ImageHeight)
-            difference = abs(potential - parameter_potential_function(num, EquiNumber))
+            difference = abs(potential - potential_function(num, num, EquiNumber))
             if difference < thickness:
                 draw.point([width, height], (0, 0, 0))
     im.save(filename + '.png', 'PNG')
-    
-#parameter_equipotential(0.01, 0.001, 10, 100, [-2.5, 1, 1.75, -1.75], 800, "ParameterEquipotential")
+
+# parameter_equipotential(0.1, 0.01, 9, 100, [-2.1, 0.6, -1.2, 1.2], 2000, "MandelbrotEquipotential")
+
